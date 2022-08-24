@@ -1,4 +1,60 @@
 import tkinter as tk
+import pymysql #打开数据库连接
+
+try:
+    conn = pymysql.connect(host="localhost", user="root", password="4231254abc",charset="utf8")
+    print("数据库连接成功")
+except pymysql.Error as e:
+    print("数据库连接失败："+str(e))
+conn.select_db('user')
+cursor=conn.cursor()
+print(cursor)
+
+
+def login():##定义登入
+    conn.select_db('user')
+    cur = conn.cursor()
+    c = input('Enter your name')
+    sql_update = 'SELECT password FROM login WHERE stuname = "' + c + '";'
+    cur.execute(sql_update)
+    res = str(cur.fetchone())
+    p = input('entry your password')
+    p_trans = "('" + p + "',)"
+    if p_trans == res:
+        print('welcome')
+    else:
+        print('wrong')
+        exit()
+    conn.commit()
+
+def search():##定义检索数据库
+    conn.select_db('user')
+    cur = conn.cursor()
+
+    cur.execute("select * from data;")
+
+    #取所有数据
+    resTuple=cur.fetchall()
+    print (resTuple)
+    print ('共%d条数据'%len(resTuple))
+
+    conn.commit()
+
+while True:##定义系统开始
+    login()
+    choice = int(input('switch'))
+    if choice in [0, 1, 2]:
+        if choice == 0:
+            answer = input('您确定要退出系统吗？y/n')
+            if answer == 'y' or answer == 'y':
+                print('感谢您的使用')
+                break  # 退出系统
+            else:
+                continue
+        elif choice == 1:
+            break
+        elif choice == 2:
+            search()
 
 root = tk.Tk()
 root.title("成功计算器")
@@ -85,10 +141,14 @@ def click_button(x):
 
 
 def calculation():
+    conn.select_db('user')
     cal_str = result_num.get()
-    print(cal_str)
     result = eval(cal_str)  # 计算字符串的结果
+    print(cal_str)
+    insert=cursor.execute("insert into data(equation)  values ('"+cal_str+"="+str(result)+"');")
+    conn.commit()
     result_num.set(str(result))  # 最终在label上显示的结果
+
 
 
 def btclear():
