@@ -2,7 +2,7 @@ import tkinter as tk
 import math
 
 root = tk.Tk()
-root.title("成功计算器")
+root.title("痛苦计算器")
 root.geometry('445x280+100+100')
 
 root.attributes("-alpha", 1)
@@ -19,8 +19,8 @@ result_num.set('')
 '''第一行'''
 tk.Label(root,
          textvariable=result_num, font=font, height=2,
-         width=25, justify=tk.LEFT, anchor=tk.SE  # SE表示右下角
-         ).grid(row=1, column=1, columnspan=5)
+         width=30, justify=tk.LEFT, anchor=tk.SE  # SE表示右下角
+         ).grid(row=1, column=1, columnspan=6)
 
 '''第二行'''
 btn_clear = tk.Button(root, text='C', width=5, font=font_16, relief=tk.FLAT, bg='#b1b2b2')
@@ -100,22 +100,21 @@ btn_sqrt.grid(row=6, column=5, padx=4, pady=2)
 
 def click_button(x):
     """
-    This is a function, click_button!
+    点击按钮触发的效果。
 
     :param x: input x
-    :return:
     """
     print('x:\t', x)
     result_num.set(result_num.get() + x)
 
 
-def calculation():
-    cal_str = result_num.get()
-    print(cal_str)
-    result = eval(cal_str)  # 计算字符串的结果
-    result_num.set(str(result))  # 最终在label上显示的结果
-
 def CAL(operator):
+    """
+    实现计算的主要函数
+
+    :param operator: 计算器上显示的运算符
+
+    """
     global Is_cal
     global storage
     if operator == 'sqrt':
@@ -164,11 +163,27 @@ def CAL(operator):
 
 
 def btnclear():
+    """
+    清除键，清空计算器显示的结果
+
+    """
     result_num.set('')
 
 
 def btnback():
-    pass
+    """
+    删除上一个输入的数字或者运算符；若已经进行过运算则清空屏幕。
+
+    """
+    global Is_cal
+    if Is_cal:
+        result_num.set('')
+        Is_cal = False
+    if result_num.get() != '':
+        if len(result_num.get()) > 1:
+            result_num.set(result_num.get()[:-1])
+        else:
+            result_num.set('')
 
 
 btn_1.config(command=lambda: click_button('1'))
@@ -197,7 +212,7 @@ btn_memoryrecall.config(command=lambda: CAL('MR'))
 
 
 btn_clear.config(command=btnclear)
-btn_equal.config(command=calculation)
+btn_equal.config(command=lambda: CAL('='))
 btn_back.config(command=btnback)
 
 root.mainloop()
