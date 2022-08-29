@@ -1,7 +1,7 @@
 import tkinter as tk
 import math
 
-root = tk.Tk()
+root = tk.Tk()  # 主窗口
 root.title("痛苦计算器")
 root.geometry('445x280+100+100')
 
@@ -10,10 +10,11 @@ root["background"] = "#ffffff"
 font = ('宋体', 20)
 font_16 = ('宋体', 16)
 
-Is_cal = False  # 记录是否按下了运算符
+Is_cal = False  # 记录是否按下了运算符，back键
 storage = []  # 存储数字
+memory = []
 
-result_num = tk.StringVar()
+result_num = tk.StringVar()  # 储存结果，用于显示
 result_num.set('')
 
 '''第一行'''
@@ -23,6 +24,7 @@ tk.Label(root,
          ).grid(row=1, column=1, columnspan=6)
 
 '''第二行'''
+# 六个键显示的格式
 btn_clear = tk.Button(root, text='C', width=5, font=font_16, relief=tk.FLAT, bg='#b1b2b2')
 btn_back = tk.Button(root, text='←', width=5, font=font_16, relief=tk.FLAT, bg='#b1b2b2')
 btn_division = tk.Button(root, text='÷', width=5, font=font_16, relief=tk.FLAT, bg='#b1b2b2')
@@ -30,6 +32,7 @@ btn_multiplication = tk.Button(root, text='x', width=5, font=font_16, relief=tk.
 btn_memoryclear = tk.Button(root, text='MC', width=5, font=font_16, relief=tk.FLAT, bg='#b1b2b2')  #记忆清除功能
 btn_memoryrecall = tk.Button(root, text='MR',width=5, font=font_16,relief=tk.FLAT, bg='#b1b2b2')  # 记忆再现功能
 
+# 位置
 btn_clear.grid(row=2, column=1, padx=4, pady=2)
 btn_back.grid(row=2, column=2, padx=4, pady=2)
 btn_division.grid(row=2, column=3, padx=4, pady=2)
@@ -99,24 +102,33 @@ btn_sqrt.grid(row=6, column=5, padx=4, pady=2)
 
 
 def click_button(x):
+# 点击按钮
     """
     点击按钮触发的效果。
 
     :param x: input x
     """
     print('x:\t', x)
+    if result_num.get() == '0':
+        # storage.clear()
+        result_num.set('')
+
+
     result_num.set(result_num.get() + x)
 
 
 def CAL(operator):
+
+    # 计算
     """
     实现计算的主要函数
 
     :param operator: 计算器上显示的运算符
-
+    :return:计算结果
     """
     global Is_cal
     global storage
+    global memory
     if operator == 'sqrt':
         try:
             result = math.sqrt(float(result_num.get()))
@@ -125,42 +137,65 @@ def CAL(operator):
         result_num.set(result)
         Is_cal = True
     elif operator == 'MC':
-        storage.clear()
-    elif operator == 'MR':
+        memory.clear()   # 记忆清除
+    elif operator == 'MR':  # memory recall 把之前储存的调出来
         if Is_cal:
             result_num.set('')
-        storage.append(result_num.get())
-        expression = ''.join(storage)
+        memory.append(result_num.get())
+        expression = ''.join(memory)
         try:
             result = eval(expression)
         except:
             result = 'illegal operation'
         result_num.set(result)
         Is_cal = True
-    elif operator == 'MS':
-        storage.clear()
-        storage.append(result_num.get())
-    elif operator == 'M+':
-        storage.append(result_num.get())
-    elif operator == 'M-':
-        if result_num.get().startswith('-'):
-            storage.append(result_num.get())
-        else:
-            storage.append('-' + result_num.get())
+    elif operator == 'MS':  # memory save 屏幕的数字储存到记忆
+        memory.clear()
+        memory.append(result_num.get())
+    elif operator == 'M+':  # 记忆的数+现在屏幕里面有的
+        result = float(result_num.get()) + float(memory[0])
+        result_num.set(result)
+
+        # storage.append(result_num.get())
+    elif operator == 'M-':  # 记忆的数-现在屏幕里面有的
+
+        result = float(memory[0]) - float(result_num.get())
+        result_num.set(result)
+
+        # if result_num.get().startswith('-'):
+        #    storage.append(result_num.get())
+        #else:
+        #    storage.append('-' + result_num.get())
     elif operator == '=':
         if Is_cal:
             result_num.set('0')
-        storage.append(result_num.get())
-        expression = ''.join(storage)
-        try:
-            result = eval(expression)
-        # 除以0的情况
-        except:
-            result = 'illegal operation'
-        result_num.set(result)
-        storage.clear()
-        Is_cal = True
 
+            storage.clear()
+            pass
+            # 再按一下 = 显示清零
+            storage.append(result_num.get())
+            expression = ''.join(storage)
+            try:
+                result = eval(expression)
+            # 除以0的情况
+            except:
+                result = 'illegal operation'
+            result_num.set(result)
+            storage.clear()
+            Is_cal = False
+        else:
+            storage.append(result_num.get())
+            expression = ''.join(storage)
+            try:
+                result = eval(expression)
+            # 除以0的情况
+            except:
+                result = 'illegal operation'
+            result_num.set(result)
+            storage.clear()
+            Is_cal = True
+
+    return (result, storage)
 
 def btnclear():
     """
@@ -186,6 +221,7 @@ def btnback():
             result_num.set('')
 
 
+# 点击和功能绑定
 btn_1.config(command=lambda: click_button('1'))
 btn_2.config(command=lambda: click_button('2'))
 btn_3.config(command=lambda: click_button('3'))
