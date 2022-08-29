@@ -288,6 +288,7 @@ def login():        #加密系统
                     else:
                         print("The Number of Times You Entered Your Password Exceeded the Limit")
                         exit()
+            break
 
 login()
 btn_1.config(command=lambda: click_button('1'))

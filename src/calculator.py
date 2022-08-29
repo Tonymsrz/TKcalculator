@@ -1,5 +1,24 @@
 import tkinter as tk
 import math
+import pymysql #打开数据库连接
+
+try:
+    conn = pymysql.connect(host="localhost", user="root", password="4231254abc",charset="utf8")
+    print("数据库连接成功")
+except pymysql.Error as e:
+    print("数据库连接失败："+str(e))
+conn.select_db('user')
+cursor=conn.cursor()
+print(cursor)           #连接到数据库
+
+
+cur = conn.cursor()
+
+cur.execute("select * from data;")
+resTuple = cur.fetchall()
+time = len(resTuple)
+print ('共%d条数据'%len(resTuple))  #取所有数据并计算数据数量
+lenth = time
 
 root = tk.Tk()  # 主窗口
 root.title("痛苦计算器")
@@ -129,6 +148,9 @@ def CAL(operator):
     global Is_cal
     global storage
     global memory
+    global time,lenth
+    cal_str = result_num.get()
+    conn.select_db('user')  # 对接数据库
     if operator == 'sqrt':
         try:
             result = math.sqrt(float(result_num.get()))
@@ -137,6 +159,7 @@ def CAL(operator):
         result_num.set(result)
         Is_cal = True
     elif operator == 'MC':
+        result = 0
         memory.clear()   # 记忆清除
     elif operator == 'MR':  # memory recall 把之前储存的调出来
         if Is_cal:
@@ -150,6 +173,7 @@ def CAL(operator):
         result_num.set(result)
         Is_cal = True
     elif operator == 'MS':  # memory save 屏幕的数字储存到记忆
+        result = 0
         memory.clear()
         memory.append(result_num.get())
     elif operator == 'M+':  # 记忆的数+现在屏幕里面有的
@@ -168,7 +192,7 @@ def CAL(operator):
         #    storage.append('-' + result_num.get())
     elif operator == '=':
         if Is_cal:
-            result_num.set('0')
+            result_num.set(result_num.get())
 
             storage.clear()
             pass
@@ -194,8 +218,14 @@ def CAL(operator):
             result_num.set(result)
             storage.clear()
             Is_cal = True
-
-    return (result, storage)
+        insert = cursor.execute("insert into data(equation)  values ('" + cal_str + "=" + str(result) + "');")
+        conn.commit()
+        cur.execute("select * from data;")
+        resTuple = cur.fetchall()
+        time = len(resTuple)
+        lenth =time
+        print('后台计算记录已更新为%d条数据' % len(resTuple))  # 取所有数据并计算数据数量
+    return (result,storage)
 
 def btnclear():
     """
@@ -220,7 +250,81 @@ def btnback():
         else:
             result_num.set('')
 
+def btnshowup():
+    '''
+    对计算记录进行向上调取
+    '''
+    global time
+    if time > 0:
+        time = time -1
+        cur.execute("select * from data;")
+        cur.scroll(time, mode='relative')
+        resTuple = cur.fetchone()
+        resTuple = str(resTuple)
+        resTuple = resTuple.replace(",", "").replace("'","").lstrip('(').rstrip(')')
+        print (resTuple)
+        result_num.set(resTuple)
+    else:
+        result_num.set('no more record!!')
+        time = -1
 
+
+
+
+def btnshowdown():
+    '''
+    对计算记录进行向上调取
+    '''
+    global time,lenth
+    if time < lenth-1:
+        time = time+1
+        cur.execute("select * from data;")
+        cur.scroll(time, mode='relative')
+        resTuple = cur.fetchone()
+        resTuple = str(resTuple)
+        resTuple = resTuple.replace(",", "").replace("'","").lstrip('(').rstrip(')')
+        print (resTuple)
+        result_num.set(resTuple)
+    else:
+        time = lenth-1
+        cur.execute("select * from data;")
+        cur.scroll(time, mode='relative')
+        resTuple = cur.fetchone()
+        resTuple = str(resTuple)
+        resTuple = resTuple.replace(",", "").replace("'","").lstrip('(').rstrip(')')
+        print (resTuple)
+        result_num.set(resTuple)
+
+def login():        #加密系统
+    t = 0
+    while True:
+        conn.select_db('user')
+        cur = conn.cursor()
+        c = input('Enter your name')
+        sql_update = 'SELECT password FROM login WHERE stuname = "' + c + '";'
+        cur.execute(sql_update)
+        res = str(cur.fetchone())
+        if res=="None":
+            print('User Unknown!')
+            continue
+        else:
+            while True:
+                p = input('Enter your password')
+                p_trans = "('" + p + "',)"
+                if p_trans == res:
+                    print('Welcome '+c+'~')
+                    break
+                else:
+                    t = t+1
+                    if t<5:
+                        print('The Password Was Entered Incorrectly!!')
+                        continue
+                    else:
+                        print("The Number of Times You Entered Your Password Exceeded the Limit")
+                        exit()
+            break
+
+login()
 # 点击和功能绑定
 btn_1.config(command=lambda: click_button('1'))
 btn_2.config(command=lambda: click_button('2'))
@@ -250,5 +354,7 @@ btn_memoryrecall.config(command=lambda: CAL('MR'))
 btn_clear.config(command=btnclear)
 btn_equal.config(command=lambda: CAL('='))
 btn_back.config(command=btnback)
+btn_memoryup.config(command=btnshowup)
+btn_memorydown.config(command=btnshowdown)
 
 root.mainloop()
